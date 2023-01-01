@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spotify-collab
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: spotify-collab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spotify-collab
+  template:
+    metadata:
+      namespace: {{ .Values.namespace }}
+      labels:
+        app: spotify-collab
+    spec:
+      containers:
+        - name: spotify-collab
+          envFrom:
+            - configMapRef:
+                name: spotify-collab-config
+          ports:
+            - containerPort: 3000
+          image: {{ .Values.image }}
+          imagePullPolicy: Always
+          imagePullSecrets:
+            - name: spotify-collab-registry

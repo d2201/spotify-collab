@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spotify-collab-config
+  namespace: {{ .Values.namespace }}
+data:
+  SPOTIFY_CLIENT_ID: {{ .Values.spotifyClientId }}
+  SPOTIFY_CLIENT_SECRET: {{ .Values.spotifyClientSecret }}
+  APP_URL: {{ .Values.appUrl }}
+  {{ -if .Values.debugEnabled }}
+  DEBUG: "spotify-collab:*"
+  {{ -end }}
