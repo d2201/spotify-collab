@@ -71,7 +71,10 @@ const upsertPlaylistForSession: Controller = async (req, res) => {
     session.playlistId = playlist.body.id
   }
 
-  queue.enqueue(() => fillPlaylist(session.playlistId, apis))
+  queue.enqueue({
+    id: session.playlistId,
+    handler: () => fillPlaylist(session.playlistId, apis)
+  })
 
   res.send(
     `<html>
