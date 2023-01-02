@@ -17,7 +17,6 @@ export class SessionManager {
       ownerToken,
       joinedTokens: [],
       id,
-      playlistId: '2lKqJqHkxHU5k2i47oiBko',
     })
 
     return id
