@@ -13,13 +13,11 @@ const getRecommendedTracksForUser = async (
   const [
     shortTermTracks,
     mediumTermTracks,
-    longTermTracks,
-    moreShortTermTracks,
+    longTermTracks
   ] = await Promise.all([
     api.getMyTopTracks({ time_range: 'short_term', limit: 50 }),
     api.getMyTopTracks({ time_range: 'medium_term', limit: 50 }),
     api.getMyTopTracks({ time_range: 'long_term', limit: 50 }),
-    api.getMyTopTracks({ time_range: 'short_term', limit: 50, offset: 50 }),
   ]).then((results) => results.map((result) => result.body.items))
 
   // We want to preserve ratio of 50% short term, 30% medium term, 20% long term
@@ -30,8 +28,8 @@ const getRecommendedTracksForUser = async (
   mergeTracks(longTermTracks, tracks, Math.floor(trackLimit * 0.2))
 
   if (tracks.size < trackLimit) {
-    debug('Not enough tracks, adding more short term tracks')
-    mergeTracks(moreShortTermTracks, tracks, trackLimit - tracks.size)
+    debug('Not enough tracks, trying to fill from other time ranges')
+    mergeTracks(shortTermTracks.concat(mediumTermTracks, longTermTracks), tracks, trackLimit - tracks.size)
   }
 
   if (tracks.size < trackLimit) {
