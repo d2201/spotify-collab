@@ -12,11 +12,11 @@ export class JobQueue {
 
   enqueue(job: Job) {
     if (this._queue.some((q) => q.id === job.id)) {
-      debug('Job already enqueued')
+      debug(`[id: ${job.id}] Job already enqueued`)
       return
     }
 
-    debug('New job enqueued')
+    debug(`[id: ${job.id}] New job enqueued`)
     this._queue.push(job)
   }
 
@@ -28,12 +28,12 @@ export class JobQueue {
     }
 
     try {
-      debug('Processing job')
+      debug(`[id: ${job.id}] Processing job`)
       await job.handler()
-      debug('Job processed')
+      debug(`[id: ${job.id}] Job processed`)
     } catch (error) {
       console.error('Error processing job: ', error)
-      debug('Enqueuing job again')
+      debug(`[id: ${job.id}] Enqueuing job again`)
       this.enqueue(job)
     }
   }
