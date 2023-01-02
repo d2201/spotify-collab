@@ -1,11 +1,12 @@
 import SpotifyWebApi from 'spotify-web-api-node'
 import grantManager from '../../grants'
 import queue from '../../queue'
-import { Controller } from '../../types'
+import { Controller, Track } from '../../types'
 import { createSpotifyApi, namesConcatenator } from '../../utils'
 import getRecommendedTracksForUser from '../services/getRecommendedTracksForUser'
 import sessionManager from '../session-manager'
 import _ from 'lodash'
+import { MAX_TRACKS_PER_PLAYLIST } from '../../consts'
 
 const upsertPlaylistForSession: Controller = async (req, res) => {
   const { grantToken } = req
@@ -89,9 +90,10 @@ const upsertPlaylistForSession: Controller = async (req, res) => {
 export default upsertPlaylistForSession
 
 const fillPlaylist = async (playlistId: string, apis: SpotifyWebApi[]) => {
-  const trackLimitPerUser = Math.ceil(100 / apis.length)
+  const trackLimitPerUser = Math.ceil(MAX_TRACKS_PER_PLAYLIST / apis.length)
   const [ownerApi, ...otherApis] = apis
 
+  // Owner by default follows the playlist
   await Promise.all(otherApis.map((api) => api.followPlaylist(playlistId)))
 
   await removeTracksFromPlaylist(playlistId, ownerApi)
@@ -100,21 +102,25 @@ const fillPlaylist = async (playlistId: string, apis: SpotifyWebApi[]) => {
     apis.map((api) => getRecommendedTracksForUser(api, trackLimitPerUser))
   )
 
+  const mixedTracks = mixTracks(tracks)
+
+  // Unfortunately only owner can add tracks to a collaborative playlist
+  await ownerApi.addTracksToPlaylist(
+    playlistId,
+    mixedTracks.map((t) => t.uri)
+  )
+}
+
+const mixTracks = (tracks: Track[][]): Track[] => {
   const zippedTracks = _.zip(...tracks)
 
-  for (let i = 0; i < trackLimitPerUser; i++) {
-    const tracksToAdd = zippedTracks[i]
+  const mixedTracks: Track[] = []
 
-    if (!tracksToAdd) {
-      break
-    }
-
-    // Unfortunately only owner can add tracks to a collaborative playlist :/
-    await ownerApi.addTracksToPlaylist(
-      playlistId,
-      tracksToAdd.map((t) => t.uri)
-    )
+  for (const tracks of zippedTracks) {
+    mixedTracks.push(...tracks)
   }
+
+  return mixedTracks
 }
 
 const removeTracksFromPlaylist = async (
