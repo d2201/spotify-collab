@@ -87,7 +87,9 @@ export default upsertPlaylistForSession
 
 const fillPlaylist = async (playlistId: string, apis: SpotifyWebApi[]) => {
   const trackLimitPerUser = Math.ceil(100 / apis.length)
-  const ownerApi = apis[0]
+  const [ownerApi, ...otherApis] = apis
+
+  await Promise.all(otherApis.map((api) => api.followPlaylist(playlistId)))
 
   await removeTracksFromPlaylist(playlistId, ownerApi)
 
