@@ -102,6 +102,7 @@ const fillPlaylist = async (playlistId: string, apis: SpotifyWebApi[]) => {
     apis.map((api) => getRecommendedTracksForUser(api, trackLimitPerUser))
   )
 
+  // TODO: Support batching as spotify only allows 100 tracks per request
   const mixedTracks = mixTracks(tracks)
 
   // Unfortunately only owner can add tracks to a collaborative playlist
