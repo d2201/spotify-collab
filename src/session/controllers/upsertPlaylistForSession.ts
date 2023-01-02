@@ -68,7 +68,7 @@ const upsertPlaylistForSession: Controller = async (req, res) => {
 
   const hash = calculateHashFromUserIds(userIds)
 
-  await tryToSetExistingPlaylist(session, ownerApi, hash)
+  await tryToSetExistingPlaylist(session, ownerApi, userIds[0], hash)
 
   if (!session.playlistId) {
     const playlist = await ownerApi.createPlaylist(
@@ -127,14 +127,14 @@ const calculateHashFromUserIds = (userIds: string[]) => {
   return uuidv5(_.sortBy(userIds).join('.'), '1ed92f89-eab6-4fb6-9923-bef01c3eee30').slice(0, 8)
 }
 
-const tryToSetExistingPlaylist = async (session: Session, ownerApi: SpotifyWebApi, hash: string): Promise<void> => {
+const tryToSetExistingPlaylist = async (session: Session, ownerApi: SpotifyWebApi, ownerId: string, hash: string): Promise<void> => {
   if (session.playlistId) {
     return
   }
 
   const playlists = await getPlaylists(ownerApi)
 
-  const playlist = playlists.find((p) => p.description.includes(hash))
+  const playlist = playlists.find((p) => p.description.includes(hash) && p.owner.id === ownerId)
 
   if (playlist && !session.playlistId) {
     debug('Found already existing playlist - setting it as session playlist')
