@@ -25,5 +25,5 @@ spec:
             - containerPort: 3000
           image: {{ .Values.image }}
           imagePullPolicy: Always
-          imagePullSecrets:
-            - name: {{ .Values.imageSecretRegistry }}}
+      imagePullSecrets:
+        - name: {{ .Values.imageSecretRegistry }}

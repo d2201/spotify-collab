@@ -7,6 +7,6 @@ data:
   SPOTIFY_CLIENT_ID: {{ .Values.spotifyClientId }}
   SPOTIFY_CLIENT_SECRET: {{ .Values.spotifyClientSecret }}
   APP_URL: {{ .Values.appUrl }}
-  {{ -if .Values.debugEnabled }}
+  {{ if .Values.debugEnabled }}
   DEBUG: "spotify-collab:*"
-  {{ -end }}
+  {{ end }}
