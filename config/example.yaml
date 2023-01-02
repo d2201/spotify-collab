@@ -1,1 +1,2 @@
 namespace: "SET THE NAMESPACE" # This should be user-defined
+imageSecretRegistry: "spotify-collab-registry"

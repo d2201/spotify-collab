@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spotify-collab
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: spotify-collab
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+  selector:
+    app: spotify-collab
