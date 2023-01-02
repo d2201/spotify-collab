@@ -38,6 +38,7 @@ app.get('/sign-in-with-spotify', (req, res) => {
     'user-top-read',
     'playlist-modify-public',
     'playlist-modify-private',
+    'playlist-read-collaborative'
   ]
 
   res.redirect(

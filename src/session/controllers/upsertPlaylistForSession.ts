@@ -2,11 +2,15 @@ import SpotifyWebApi from 'spotify-web-api-node'
 import grantManager from '../../grants'
 import queue from '../../queue'
 import { Controller, Track } from '../../types'
-import { createSpotifyApi, namesConcatenator } from '../../utils'
+import { createDebugger, createSpotifyApi, namesConcatenator } from '../../utils'
 import getRecommendedTracksForUser from '../services/getRecommendedTracksForUser'
-import sessionManager from '../session-manager'
+import sessionManager, { Session } from '../session-manager'
 import _ from 'lodash'
 import { MAX_TRACKS_PER_PLAYLIST } from '../../consts'
+import getPlaylists from '../services/getPlaylists'
+import { v5 as uuidv5 } from 'uuid'
+
+const debug = createDebugger('playlist-creator')
 
 const upsertPlaylistForSession: Controller = async (req, res) => {
   const { grantToken } = req
@@ -30,9 +34,9 @@ const upsertPlaylistForSession: Controller = async (req, res) => {
     return
   }
 
-  const spotifyApi = createSpotifyApi()
+  const ownerApi = createSpotifyApi()
 
-  spotifyApi.setCredentials({
+  ownerApi.setCredentials({
     accessToken: grant.access_token,
     refreshToken: grant.refresh_token,
   })
@@ -42,7 +46,7 @@ const upsertPlaylistForSession: Controller = async (req, res) => {
   )
 
   const apis = [
-    spotifyApi,
+    ownerApi,
     ...sessionGrants.map((grant) => {
       const api = createSpotifyApi()
 
@@ -55,15 +59,22 @@ const upsertPlaylistForSession: Controller = async (req, res) => {
     }),
   ]
 
-  const userNames = await Promise.all(
-    apis.map((api) => api.getMe().then((res) => res.body.display_name))
+  const users = await Promise.all(
+    apis.map((api) => api.getMe().then((res) => res.body))
   )
 
+  const userNames = users.map((user) => user.display_name)
+  const userIds = users.map((user) => user.id)
+
+  const hash = calculateHashFromUserIds(userIds)
+
+  await tryToSetExistingPlaylist(session, ownerApi, hash)
+
   if (!session.playlistId) {
-    const playlist = await spotifyApi.createPlaylist(
+    const playlist = await ownerApi.createPlaylist(
       `Collab: ${namesConcatenator(userNames)}`,
       {
-        description: 'Created with Spotify Collab',
+        description: `Created with Spotify Collab - hash: ${hash}`,
         public: false,
         collaborative: true,
       }
@@ -110,6 +121,25 @@ const fillPlaylist = async (playlistId: string, apis: SpotifyWebApi[]) => {
     playlistId,
     mixedTracks.map((t) => t.uri)
   )
+}
+
+const calculateHashFromUserIds = (userIds: string[]) => {
+  return uuidv5(_.sortBy(userIds).join('.'), '1ed92f89-eab6-4fb6-9923-bef01c3eee30').slice(0, 8)
+}
+
+const tryToSetExistingPlaylist = async (session: Session, ownerApi: SpotifyWebApi, hash: string): Promise<void> => {
+  if (session.playlistId) {
+    return
+  }
+
+  const playlists = await getPlaylists(ownerApi)
+
+  const playlist = playlists.find((p) => p.description.includes(hash))
+
+  if (playlist && !session.playlistId) {
+    debug('Found already existing playlist - setting it as session playlist')
+    session.playlistId = playlist.id
+  }
 }
 
 const mixTracks = (tracks: Track[][]): Track[] => {

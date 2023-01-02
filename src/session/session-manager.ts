@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid'
 
-type Session = {
+export type Session = {
   id: string
   ownerToken: string
   joinedTokens: string[]
