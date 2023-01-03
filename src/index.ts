@@ -53,6 +53,18 @@ app.get('/sign-in-with-spotify', (req, res) => {
 
 const debug = createDebugger('app')
 
+app.get('/access-denied', (req, res) => {
+  res.send(`
+    <html>
+    <body>
+    <h1 style="color: red;">You need to be added to the beta to use this app</h1>
+    <h3>Send an email to <a href="mailto:${process.env.DEVELOPER_EMAIL}" target="_blank">${process.env.DEVELOPER_EMAIL}</a></h3>
+    <p>Go back to <a href="/">home</a></p>
+    </body>
+    </html>
+  `)
+})
+
 app.get(
   '/spotify-callback',
   handler(async (req, res) => {
@@ -70,6 +82,21 @@ app.get(
     const redirectUrl = ensureSafeRedirectUrl((redirect as string) || '/')
 
     const grant = await api.authorizationCodeGrant(code as string)
+
+    const userApi = createSpotifyApi()
+
+    userApi.setCredentials({
+      accessToken: grant.body.access_token,
+      refreshToken: grant.body.refresh_token
+    })
+
+    try {
+      await userApi.getMe()
+    } catch (e) {
+      debug('User has no access')
+      res.redirect('/access-denied')
+      return
+    }
 
     const id = grantManager.storeGrant(grant.body)
 
