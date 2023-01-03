@@ -3,11 +3,13 @@ import { createDebugger } from './utils'
 type Job = {
   id: string
   handler: () => Promise<void>
+  retries?: number
 }
 
 const debug = createDebugger('queue')
 
 export class JobQueue {
+  private readonly MAX_RETRIES = 5
   private readonly _queue: Job[] = []
 
   enqueue(job: Job) {
@@ -23,7 +25,7 @@ export class JobQueue {
   async process() {
     const job = this._queue.shift()
 
-    if (!job) {
+    if (!job || job.retries >= this.MAX_RETRIES) {
       return
     }
 
@@ -34,7 +36,7 @@ export class JobQueue {
     } catch (error) {
       console.error('Error processing job: ', error)
       debug(`[id: ${job.id}] Enqueuing job again`)
-      this.enqueue(job)
+      this.enqueue({ ...job, retries: (job.retries ?? 0) + 1 })
     }
   }
 
