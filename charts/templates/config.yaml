@@ -6,6 +6,7 @@ metadata:
 data:
   SPOTIFY_CLIENT_ID: {{ .Values.spotifyClientId }}
   SPOTIFY_CLIENT_SECRET: {{ .Values.spotifyClientSecret }}
+  DEVELOPER_EMAIL: {{ .Values.developerEmail }}
   APP_URL: {{ .Values.appUrl }}
   {{ if .Values.debugEnabled }}
   DEBUG: "spotify-collab:*"
