@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid'
+import { ExpiringMap, ONE_MINUTE } from '../utils'
 
 export type Session = {
   id: string
@@ -8,7 +9,7 @@ export type Session = {
 }
 
 export class SessionManager {
-  private readonly _sessions: Map<string, Session> = new Map()
+  private readonly _sessions: ExpiringMap<string, Session> = new ExpiringMap(10 * ONE_MINUTE)
 
   createEmptySession(ownerToken: string) {
     const id = uuid()

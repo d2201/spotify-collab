@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid'
+import { ExpiringMap, ONE_MINUTE } from './utils'
 
 type Grant = {
   access_token: string
@@ -9,7 +10,7 @@ type Grant = {
 }
 
 export class GrantManager {
-  private readonly _grants: Map<string, Grant> = new Map()
+  private readonly _grants: ExpiringMap<string, Grant> = new ExpiringMap(5 * ONE_MINUTE)
 
   storeGrant(grant: Grant) {
     const id = uuid()

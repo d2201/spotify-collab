@@ -39,3 +39,32 @@ export const ensureSafeRedirectUrl = (url: string) => {
 
   return redirectUrl
 }
+
+export const ONE_MINUTE = 60 * 1000
+
+export class ExpiringMap<Key, Val> {
+  private readonly _map = new Map<Key, Val>()
+  private readonly _timeoutMap = new Map<Key, NodeJS.Timeout>()
+
+  constructor(private readonly _ttl: number) {}
+
+  set(key: Key, val: Val) {
+    this.refreshTimeout(key)
+    return this._map.set(key, val)
+  }
+
+  get(key: Key) {
+    this.refreshTimeout(key)
+    return this._map.get(key)
+  }
+
+  private refreshTimeout(key: Key) {
+    if (this._timeoutMap.has(key)) {
+      clearTimeout(this._timeoutMap.get(key))
+    }
+
+    const timeout = setTimeout(() => this._map.delete(key), this._ttl).unref()
+
+    this._timeoutMap.set(key, timeout)
+  }
+}
