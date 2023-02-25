@@ -101,7 +101,7 @@ const upsertPlaylistForSession: Controller = async (req, res) => {
 export default upsertPlaylistForSession
 
 const fillPlaylist = async (playlistId: string, apis: SpotifyWebApi[]) => {
-  const trackLimitPerUser = Math.ceil(MAX_TRACKS_PER_PLAYLIST / apis.length)
+  const trackLimitPerUser = Math.floor(MAX_TRACKS_PER_PLAYLIST / apis.length)
   const [ownerApi, ...otherApis] = apis
 
   // Owner by default follows the playlist
