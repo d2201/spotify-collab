@@ -35,7 +35,6 @@ export class JobQueue {
       debug(`[id: ${job.id}] Job processed`)
     } catch (error) {
       console.error('Error processing job: ', error)
-      debug(`[id: ${job.id}] Enqueuing job again`)
       this.enqueue({ ...job, retries: (job.retries ?? 0) + 1 })
     }
   }
